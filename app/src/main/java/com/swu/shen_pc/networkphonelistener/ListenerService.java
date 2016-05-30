@@ -10,13 +10,16 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
 public class ListenerService extends Service {
 
-    public static final String NET_ACTION = "netAction";
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+      
+
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
@@ -40,8 +43,29 @@ public class ListenerService extends Service {
                     Toast.makeText(context, "网络异常", Toast.LENGTH_SHORT).show();
                 }
 
+            } else if (intent.getAction().equals(Intent.ACTION_NEW_OUTGOING_CALL)) {
 
+                //这是你拨打的电话号码
+                Toast.makeText(context, intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER), Toast.LENGTH_SHORT).show();
+
+            } else {
+                TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(TELEPHONY_SERVICE);
+                telephonyManager.getCallState();
+                switch (telephonyManager.getCallState()) {
+                    case TelephonyManager.CALL_STATE_RINGING:
+                        Toast.makeText(context, "电话来了", Toast.LENGTH_SHORT).show();
+                        break;
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        Toast.makeText(context, "没有电话", Toast.LENGTH_SHORT).show();
+                        break;
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                        Toast.makeText(context, "接听", Toast.LENGTH_SHORT).show();
+                        break;
+
+                }
+                Toast.makeText(context, "电话来了", Toast.LENGTH_SHORT).show();
             }
+
         }
     };
 
@@ -63,7 +87,10 @@ public class ListenerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        intentFilter.addAction(Intent.ACTION_NEW_OUTGOING_CALL);
+        intentFilter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
         registerReceiver(mBroadcastReceiver, intentFilter);
     }
 
